@@ -31,6 +31,7 @@ char pass[] = "akhilesh";
 #define DisCounterp V19
 #define WeaCon V20
 #define SRTp V21
+#define WeaConp V22
 ////////////////////////
 
 ///////Crow Notes///////
@@ -55,6 +56,7 @@ int DisCount=0;
 int SRTime,SRTcount=0;
 String Condition;
 int WeatherComp=0;
+int WeatherCompP=0;
 ////////////////////////
 
 WidgetRTC rtc;
@@ -109,26 +111,38 @@ BLYNK_WRITE(SSTp)//SST store value
 
 BLYNK_WRITE(SSTimeCheck)//SST time store value
 {
-Serial.println("At SSTime");
 SSTime= Home.sunset(year(), month(), day(), false)+30+10;//30 for time zone and 10 for approx last light
+if(WeatherCompP)
+  SSTime-=20;
 }
 
 BLYNK_WRITE(SRTp)//SRT count store
 { SRTcount=param.asInt();
 }
 
+BLYNK_WRITE(WeaConp)// To compensate power loss in case of Compensated SST
+{
+  WeatherCompP=param.asInt();
+}
+
+
 BLYNK_WRITE(WeaCon)//SST Weather condition compensation
 {
   Condition=param.asStr();
-  Serial.println("At WeaCon");
   if(Condition == "Haze" || Condition == "Cloudy" || Condition == "Fog" || Condition == "Rain")
   {
     SSTime-=20;
+    char SSTime24[] = "00:00";
+    Dusk2Dawn::min2str(SSTime24, SSTime);
+    Blynk.virtualWrite(SSTimeCheck,String(SSTime24)+" C");
     WeatherComp=1;
-    Blynk.virtualWrite(WeaCon,0); //For one time compensation per day
+    Blynk.virtualWrite(WeaConp,1);
   }
   else
+  {
     WeatherComp=0;
+    Blynk.virtualWrite(WeaConp,0);
+  }
 }
 
 void SSTmain()//Switching function
@@ -149,7 +163,9 @@ void SSTCheck()//SST main & Time keeper
   hr=hour();
   mt=minute();
   CurTime= (hr*60)+ mt;
-  Blynk.virtualWrite(Timep, String(hr)+ ":" + mt );
+  char CurTime24[] = "00:00";
+  Dusk2Dawn::min2str(CurTime24, CurTime);
+  Blynk.virtualWrite(Timep, CurTime24 );
   
   if((CurTime>=SSTime)&&(SSTcheck==5))//Sunset checker
   {
@@ -170,7 +186,8 @@ void SSTCheck()//SST main & Time keeper
     SSTime= Home.sunset(year(), month(), day(), false)+30+10;//30 for time zone and 10 for approx last light
     SRTime= Home.sunrise(year(), month(), day(), false)+30+10;
     SRTcount=0;
-    Blynk.virtualWrite(SRTp,SRTcount);
+    Blynk.virtualWrite(SRTp,SRTcount);//Reset Crow Count
+    Blynk.virtualWrite(WeaConp,0);//Reset Weather Compensation pin
     SSTcheck=5;
     char SSTime24[] = "00:00";
     Dusk2Dawn::min2str(SSTime24, SSTime);
@@ -216,7 +233,12 @@ BLYNK_WRITE(RARp)//RAR main
   RAR=param.asInt();
   if((RAR==5)&&(RARset==1))
   {
-    Blynk.notify("Looks like it's gonna rain at your home (Time: "+ String(hour())+ ":" + String(minute()) + ")");
+    hr=hour();
+    mt=minute();
+    CurTime= (hr*60)+ mt;
+    char CurTime24[] = "00:00";
+    Dusk2Dawn::min2str(CurTime24, CurTime);
+    Blynk.notify("Looks like it's gonna rain at your home (Time: "+ String(CurTime24) + ")");
     for(int k=0;k<5;k++)
     {
         tone(D8,4000);
@@ -291,7 +313,7 @@ BLYNK_WRITE(WBHselp)//WBH selection
 ////////////////////////////////////////////////////////////////
 
 
-////////////Good Night///////////////////////////////
+///////////////////////Good Night///////////////////////////////
 
 BLYNK_WRITE(GNp)//GN main
 {
@@ -341,7 +363,7 @@ BLYNK_CONNECTED()
   rtc.begin();
   Blynk.notify("I'm ready :-)");
   delay(5000);
-  Blynk.syncVirtual(Gatep,Sitoutp,MSRp,SSTp,SSTsetp,SSTimeCheck,RARsetp,WBHsetp,WBHselp,GNsetp,GNp,Buzsetp,DisCounterp,SRTp,WeaCon);
+  Blynk.syncVirtual(Gatep,Sitoutp,MSRp,WeaConp,SSTp,SSTsetp,SSTimeCheck,RARsetp,WBHsetp,WBHselp,GNsetp,GNp,Buzsetp,DisCounterp,SRTp);
   pstat++;
   digitalWrite(D4,HIGH);
   }
@@ -359,7 +381,7 @@ else{
  delay(1500);
  noTone(D8);
  Blynk.notify("I've Reconnected");} 
-Blynk.syncVirtual(Gatep,Sitoutp,SSTsetp,SSTp,RARsetp,WBHsetp,WBHselp,GNsetp,GNp,Buzsetp,WeaCon);
+Blynk.syncVirtual(Gatep,Sitoutp,SSTsetp,SSTp,RARsetp,WBHsetp,WBHselp,GNsetp,GNp,Buzsetp);
 digitalWrite(D4,HIGH);
 conbuz=0;
 DisCount++;
@@ -371,7 +393,7 @@ void setup()
 {
   Serial.begin(9600);
   Serial.println();
-  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.7.1 for i-WSS-");
+  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.7.3 for i-WSS-");
   Serial.println("Booting up...");
   pinMode(D4,OUTPUT);//Noconnection LED
   digitalWrite(D4,LOW);
