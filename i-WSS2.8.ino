@@ -5,6 +5,9 @@
 #include <BlynkSimpleEsp8266.h>
 #include <TimeLib.h>
 #include <WidgetRTC.h>
+#include <ESP8266mDNS.h>
+#include <WiFiUdp.h>
+#include <ArduinoOTA.h>
 
 char auth[] = "oKPdLYfuKUOkgUS6bhhNL43oetoQNBTj";
 char ssid[] = "2PoInT1";
@@ -421,10 +424,11 @@ void setup()
 {
   Serial.begin(9600);
   Serial.println();
-  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.7.6 for i-WSS-");
+  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.7.7 for i-WSS-");
   Serial.println("Booting up...");
   pinMode(D4,OUTPUT);//Noconnection LED
   digitalWrite(D4,LOW);
+  OTA();
   Blynk.begin(auth, ssid, pass,IPAddress(188,166,206,43),8080);
   setSyncInterval(120 * 60);// 2 hr
   timer.setInterval(30*1000, SSTCheck);//30 seconds
@@ -437,6 +441,7 @@ void loop()
 {
   timer.run();
   Blynk.run();
+  ArduinoOTA.handle();
   if (!Blynk.connected()) 
   {  
     digitalWrite(D4,LOW);
@@ -454,4 +459,56 @@ void loop()
     conbuz=1;
     }
   } 
+}
+
+
+
+
+void OTA()
+{
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, pass);
+  while (WiFi.waitForConnectResult() != WL_CONNECTED) 
+  {
+    Serial.println("Connection Failed! Rebooting...");
+    delay(5000);
+    ESP.restart();
+  }
+
+  ArduinoOTA.setHostname("i-WSS");
+  ArduinoOTA.setPassword((const char *)"sensepro");
+  
+  ArduinoOTA.onStart([]() {
+    String type;
+    if (ArduinoOTA.getCommand() == U_FLASH) {
+      type = "sketch";
+    } else { // U_FS
+      type = "filesystem";
+    }
+
+    // NOTE: if updating FS this would be the place to unmount FS using FS.end()
+    Serial.println("Start updating " + type);
+  });
+  ArduinoOTA.onEnd([]() {
+    Serial.println("\nEnd");
+  });
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+  });
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.printf("Error[%u]: ", error);
+    if (error == OTA_AUTH_ERROR) {
+      Serial.println("Auth Failed");
+    } else if (error == OTA_BEGIN_ERROR) {
+      Serial.println("Begin Failed");
+    } else if (error == OTA_CONNECT_ERROR) {
+      Serial.println("Connect Failed");
+    } else if (error == OTA_RECEIVE_ERROR) {
+      Serial.println("Receive Failed");
+    } else if (error == OTA_END_ERROR) {
+      Serial.println("End Failed");
+    }
+  });
+  ArduinoOTA.begin();
+  Serial.println("OTA Ready");
 }
