@@ -29,6 +29,15 @@ char pass[] = "akhilesh";
 #define GNsetp V17
 #define SSTimeCheck V18 
 #define DisCounterp V19
+#define WeaCon V20
+#define SRTp V21
+////////////////////////
+
+///////Crow Notes///////
+#define NOTE_GS7 3322
+#define NOTE_A7  3520
+#define NOTE_AS7 3729
+//A AS AS AS-GS
 ////////////////////////
 
 ///Support variables/////
@@ -43,6 +52,9 @@ int conbuz=0;
 int hr,mt;
 int conbuzstat;
 int DisCount=0;
+int SRTime,SRTcount=0;
+String Condition;
+int WeatherComp=0;
 ////////////////////////
 
 WidgetRTC rtc;
@@ -90,16 +102,6 @@ BLYNK_WRITE(SSTsetp)//SST switch
 { SSTset=param.asInt();
 }
 
-void SSTmain()//Switching function
-{
-  if(SSTset)
-  {
-  Blynk.virtualWrite(Sitoutp,1);
-  digitalWrite(D5,LOW);
-  Blynk.notify("Good Evening! Sit out light has been turned ON");
-  } 
-}
-
 BLYNK_WRITE(SSTp)//SST store value
 {
   SSTcheck=param.asInt();
@@ -107,7 +109,39 @@ BLYNK_WRITE(SSTp)//SST store value
 
 BLYNK_WRITE(SSTimeCheck)//SST time store value
 {
+Serial.println("At SSTime");
 SSTime= Home.sunset(year(), month(), day(), false)+30+10;//30 for time zone and 10 for approx last light
+}
+
+BLYNK_WRITE(SRTp)//SRT count store
+{ SRTcount=param.asInt();
+}
+
+BLYNK_WRITE(WeaCon)//SST Weather condition compensation
+{
+  Condition=param.asStr();
+  Serial.println("At WeaCon");
+  if(Condition == "Haze" || Condition == "Cloudy" || Condition == "Fog" || Condition == "Rain")
+  {
+    SSTime-=20;
+    WeatherComp=1;
+    Blynk.virtualWrite(WeaCon,0); //For one time compensation per day
+  }
+  else
+    WeatherComp=0;
+}
+
+void SSTmain()//Switching function
+{
+  if(SSTset)
+  {
+  Blynk.virtualWrite(Sitoutp,1);
+  digitalWrite(D5,LOW);
+  if(!WeatherComp)
+  Blynk.notify("Good Evening! Sit out light has been turned ON");
+  else
+  Blynk.notify("Good Evening! Sit out light has been turned ON early due to "+Condition);
+  } 
 }
 
 void SSTCheck()//SST main & Time keeper
@@ -116,15 +150,27 @@ void SSTCheck()//SST main & Time keeper
   mt=minute();
   CurTime= (hr*60)+ mt;
   Blynk.virtualWrite(Timep, String(hr)+ ":" + mt );
-  if((CurTime>=SSTime)&&(SSTcheck==5))
+  
+  if((CurTime>=SSTime)&&(SSTcheck==5))//Sunset checker
   {
    SSTmain(); 
    SSTcheck=7;
    Blynk.virtualWrite(SSTp,7);
   }
+
+  if((CurTime>=SRTime)&&(SRTcount<5))//Sunrise checker
+  {
+   SRTcrow();
+   SRTcount++;
+   Blynk.virtualWrite(SRTp,SRTcount);
+  }
+  
   if((hr<1)&&(SSTcheck==7))//get sunset time for NEW day
   {
     SSTime= Home.sunset(year(), month(), day(), false)+30+10;//30 for time zone and 10 for approx last light
+    SRTime= Home.sunrise(year(), month(), day(), false)+30+10;
+    SRTcount=0;
+    Blynk.virtualWrite(SRTp,SRTcount);
     SSTcheck=5;
     char SSTime24[] = "00:00";
     Dusk2Dawn::min2str(SSTime24, SSTime);
@@ -134,6 +180,33 @@ void SSTCheck()//SST main & Time keeper
     Blynk.virtualWrite(DisCounterp,DisCount);
   }
 }
+
+void SRTcrow()
+{
+  tone(D8,NOTE_A7);
+  delay(300);
+  noTone(D8);
+  delay(100);
+  tone(D8,NOTE_AS7);
+  delay(250);
+  noTone(D8);
+  delay(30);
+  tone(D8,NOTE_AS7);
+  delay(250);
+  noTone(D8);
+  delay(150);
+  tone(D8,NOTE_AS7);
+  delay(500);
+  for(int i=NOTE_AS7;i>=NOTE_GS7;i-=2)
+  {
+    tone(D8,i);
+    delay(8);
+    }
+  noTone(D8);
+}
+
+
+
 ///////////////////////////////////////////////////////////////
 
 ////////////////////////Rain Alert Reporter/////////////////////////
@@ -242,7 +315,7 @@ BLYNK_WRITE(GNsetp)//GN switch
 
 BLYNK_WRITE(Pingp)
 {int ping=param.asInt();
-if(ping)
+if(ping==1)
 { 
  Blynk.notify("Ping success!");
 }  
@@ -268,7 +341,7 @@ BLYNK_CONNECTED()
   rtc.begin();
   Blynk.notify("I'm ready :-)");
   delay(5000);
-  Blynk.syncVirtual(Gatep,Sitoutp,MSRp,SSTp,SSTsetp,SSTimeCheck,RARsetp,WBHsetp,WBHselp,GNsetp,GNp,Buzsetp,DisCounterp);
+  Blynk.syncVirtual(Gatep,Sitoutp,MSRp,SSTp,SSTsetp,SSTimeCheck,RARsetp,WBHsetp,WBHselp,GNsetp,GNp,Buzsetp,DisCounterp,SRTp,WeaCon);
   pstat++;
   digitalWrite(D4,HIGH);
   }
@@ -286,7 +359,7 @@ else{
  delay(1500);
  noTone(D8);
  Blynk.notify("I've Reconnected");} 
-Blynk.syncVirtual(Gatep,Sitoutp,SSTsetp,SSTp,RARsetp,WBHsetp,WBHselp,GNsetp,GNp,Buzsetp);
+Blynk.syncVirtual(Gatep,Sitoutp,SSTsetp,SSTp,RARsetp,WBHsetp,WBHselp,GNsetp,GNp,Buzsetp,WeaCon);
 digitalWrite(D4,HIGH);
 conbuz=0;
 DisCount++;
@@ -298,13 +371,13 @@ void setup()
 {
   Serial.begin(9600);
   Serial.println();
-  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.6.7 for i-WSS-");
+  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.7.1 for i-WSS-");
   Serial.println("Booting up...");
   pinMode(D4,OUTPUT);//Noconnection LED
   digitalWrite(D4,LOW);
   Blynk.begin(auth, ssid, pass,IPAddress(188,166,206,43),8080);
   setSyncInterval(120 * 60);// 2 hr
-  timer.setInterval(60*1000, SSTCheck);//1 minute
+  timer.setInterval(30*1000, SSTCheck);//30 seconds
   pinMode(D3,OUTPUT);//gate
   pinMode(D5,OUTPUT);//sitout
   delay(2000);
@@ -313,12 +386,9 @@ void setup()
 void loop()
 {
   timer.run();
-  if (Blynk.connected()) 
+  Blynk.run();
+  if (!Blynk.connected()) 
   {  
-    Blynk.run();
-  } 
-  else  
-  { 
     digitalWrite(D4,LOW);
     if((conbuz==0)&&(conbuzstat==1))
     {
@@ -333,6 +403,5 @@ void loop()
         delay(500);}
     conbuz=1;
     }
-    Blynk.connect(); 
   } 
 }
