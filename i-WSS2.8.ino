@@ -1,13 +1,13 @@
 #define BLYNK_PRINT Serial
 
+#include <Dusk2Dawn.h>
 #include <ESP8266WiFi.h>
 #include <BlynkSimpleEsp8266.h>
 #include <TimeLib.h>
 #include <WidgetRTC.h>
 #include <EEPROM.h>
 
-//char auth[] = "oKPdLYfuKUOkgUS6bhhNL43oetoQNBTj";
-char auth[]="8Dh6_WN6uGtFQCc-J4N2QgiVXuuSke7p";// test
+char auth[] = "oKPdLYfuKUOkgUS6bhhNL43oetoQNBTj";
 char ssid[] = "2PoInT0";
 char pass[] = "akhilesh";
 
@@ -16,7 +16,7 @@ char pass[] = "akhilesh";
 #define Sitoutp V3
 #define MSRp V4
 #define MSRledp V5
-#define SSTp V6
+#define SSTp V6 
 #define SSTsetp V7
 #define RARp V8
 #define RARsetp V9
@@ -28,12 +28,13 @@ char pass[] = "akhilesh";
 #define Timep V15
 #define GNp V16
 #define GNsetp V17
+#define SSTimeCheck V18 
 ////////////////////////
 
 ///Support variables/////
 int pstat=0; 
 int MSRs=0,curpowerstat;
-int SST=0,SSTset;
+int CurTime,SSTset,SSTime,SSTcheck;
 int Gate,Sitout;
 int RAR,RARset;
 int WBH,WBHset,WBHsel;
@@ -102,14 +103,7 @@ if(MSRs)
 
 ////////////////////////SunSet Trigger/////////////////////////
 
-BLYNK_WRITE(SSTp)//SST main
-{
-  SST=param.asInt();
-  if((SST==5)&&(SSTset==1))
-  {
-  timeID= timer.setInterval(26*60*1000,SSTmain); //Switch ON light 26 minutes after sunset
-  }
-}
+Dusk2Dawn Home(10.324344,76.200689, 5);//Coordinates for sunset
 
 BLYNK_WRITE(SSTsetp)//SST switch
 { SSTset=param.asInt();
@@ -117,10 +111,40 @@ BLYNK_WRITE(SSTsetp)//SST switch
 
 void SSTmain()//Switching function
 {
+  if(SSTset)
+  {
   Blynk.virtualWrite(Sitoutp,1);
   digitalWrite(D5,LOW);
-  Blynk.notify("Good Evening! Sit out light has been turned ON"); 
-  timer.disable(timeID);
+  Blynk.notify("Good Evening! Sit out light has been turned ON");
+  } 
+}
+
+BLYNK_WRITE(SSTp)//SST store value
+{
+  SSTcheck=param.asInt();
+}
+
+BLYNK_WRITE(SSTimeCheck)//SST time store value
+{
+SSTime=param.asInt();  
+}
+
+void SSTCheck()//SST main
+{
+  CurTime= (hour()*60)+ minute();
+  if((CurTime>SSTime)&&(SSTcheck==5))
+  {
+   SSTmain(); 
+   SSTcheck=7;
+   Blynk.virtualWrite(SSTp,7);
+  }
+  if((hour()<1)&&(SSTcheck==7))//get sunset time for new day
+  {
+    SSTime= Home.sunset(year(), month(), day(), false)+30+23;//30 for time zone and 23 for approx last light
+    SSTcheck=5;
+    Blynk.virtualWrite(SSTp,5);
+    Blynk.virtualWrite(SSTimeCheck,SSTime);//To get Sunset time on app
+  }
 }
 
 ///////////////////////////////////////////////////////////////
@@ -206,7 +230,8 @@ BLYNK_WRITE(WBHselp)//WBH selection
 
 ////////////////////////////////////////////////////////////////
 
-////////////////////////Good Night///////////////////////////////
+////////////
+////////////Good Night///////////////////////////////
 
 BLYNK_WRITE(GNp)//GN main
 {
@@ -243,23 +268,24 @@ BLYNK_CONNECTED()
   rtc.begin();
   Blynk.notify("I'm Online :-)");
   delay(5000);
-  Blynk.syncVirtual(Gatep,Sitoutp,MSRp,SSTsetp,RARsetp,WBHsetp,WBHselp,GNsetp);
+  Blynk.syncVirtual(Gatep,Sitoutp,MSRp,SSTp,SSTsetp,SSTimeCheck,RARsetp,WBHsetp,WBHselp,GNsetp);
   pstat++;
   }
 else{
 Blynk.notify("I've Reconnected to the server"); 
-Blynk.syncVirtual(Gatep,Sitoutp,SSTsetp,RARsetp,WBHsetp,WBHselp,GNsetp);}
+Blynk.syncVirtual(Gatep,Sitoutp,SSTsetp,SSTp,RARsetp,WBHsetp,WBHselp,GNsetp);}
 }
 
 void setup()
 {
   Serial.begin(9600);
   Serial.println();
-  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.3 for i-WSS-");
+  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.5 for i-WSS-");
   Serial.println("Booting up...");
   Blynk.begin(auth, ssid, pass);
   setSyncInterval(30 * 60);
   EEPROM.begin(3);  
+  timer.setInterval(5*60*1000, SSTCheck);
   pinMode(D3,OUTPUT);//gate
   pinMode(D5,OUTPUT);//sitout
   delay(2000);
