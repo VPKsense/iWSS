@@ -49,6 +49,7 @@ int Gate,Sitout;
 int RAR,RARset;
 int WBH,WBHset,WBHsel;
 int GNset,GN;
+int GNTime=1305;//9:45 PM
 int conbuz=0;
 int hr,mt;
 int conbuzstat;
@@ -180,14 +181,21 @@ void SSTCheck()//SST main & Time keeper
    SRTcount++;
    Blynk.virtualWrite(SRTp,SRTcount);
   }
+
+  if((CurTime>=GNTime)&&(GN==7))//GN checker (GN Time defined in variables)
+  {
+   GNlight();
+  }
   
-  if((hr<1)&&(SSTcheck==7))//get sunset time for NEW day
+  if((hr<1)&&(SSTcheck==7))//get sunset time for NEW day and Reset values
   {
     SSTime= Home.sunset(year(), month(), day(), false)+30+10;//30 for time zone and 10 for approx last light
-    SRTime= Home.sunrise(year(), month(), day(), false)+30+10;
+    SRTime= Home.sunrise(year(), month(), day(), false)+30-10;// -10 for first light
     SRTcount=0;
     Blynk.virtualWrite(SRTp,SRTcount);//Reset Crow Count
     Blynk.virtualWrite(WeaConp,0);//Reset Weather Compensation pin
+    GN=7;// Reset GNp
+    Blynk.virtualWrite(GNp,GN);
     SSTcheck=5;
     char SSTime24[] = "00:00";
     Dusk2Dawn::min2str(SSTime24, SSTime);
@@ -315,20 +323,26 @@ BLYNK_WRITE(WBHselp)//WBH selection
 
 ///////////////////////Good Night///////////////////////////////
 
-BLYNK_WRITE(GNp)//GN main
+BLYNK_WRITE(GNp)//GN status store
 {
   GN=param.asInt();
- if((GN==7)&&(GNset==1))
- {Blynk.virtualWrite(Sitoutp,0);
-  Blynk.notify("Good night! Sit out light has been turned OFF");
-  digitalWrite(D5,HIGH);
-  Blynk.virtualWrite(GNp,5);
- }
 }
 
 BLYNK_WRITE(GNsetp)//GN switch
 {
   GNset=param.asInt();
+}
+
+void GNlight()//GN main
+{
+   if(GNset)
+   {
+    Blynk.virtualWrite(Sitoutp,0);
+    Blynk.notify("Good night! Sit out light has been turned OFF");
+    digitalWrite(D5,HIGH);
+    GN=5;
+    Blynk.virtualWrite(GNp,GN);
+   }
 }
 
 ////////////////////////////////////////////////////////////////
@@ -393,7 +407,7 @@ void setup()
 {
   Serial.begin(9600);
   Serial.println();
-  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.7.3 for i-WSS-");
+  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.7.4 for i-WSS-");
   Serial.println("Booting up...");
   pinMode(D4,OUTPUT);//Noconnection LED
   digitalWrite(D4,LOW);
