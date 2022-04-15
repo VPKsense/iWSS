@@ -54,10 +54,9 @@ int conbuz=0;
 int hr,mt;
 int conbuzstat;
 int DisCount=0;
-int SRTime,SRTcount=0;
+int SRTime,SRTcount=0,CrowAlt=true;
 String Condition;
 int WeatherComp=0;
-int WeatherCompP=0;
 ////////////////////////
 
 WidgetRTC rtc;
@@ -113,7 +112,9 @@ BLYNK_WRITE(SSTp)//SST store value
 BLYNK_WRITE(SSTimeCheck)//SST time store value
 {
 SSTime= Home.sunset(year(), month(), day(), false)+30+10;//30 for time zone and 10 for approx last light
-if(WeatherCompP)
+if(WeatherComp==1)
+  SSTime-=10;
+else if(WeatherComp==2)
   SSTime-=20;
 }
 
@@ -123,26 +124,35 @@ BLYNK_WRITE(SRTp)//SRT count store
 
 BLYNK_WRITE(WeaConp)// To compensate power loss in case of Compensated SST
 {
-  WeatherCompP=param.asInt();
+  WeatherComp=param.asInt();
 }
 
 
 BLYNK_WRITE(WeaCon)//SST Weather condition compensation
 {
   Condition=param.asStr();
-  if(Condition == "Haze" || Condition == "Cloudy" || Condition == "Fog" || Condition == "Rain")
+  if(Condition == "Haze" || Condition == "Mostly Cloudy")
+  {
+    SSTime-=10;
+    char SSTime24[] = "00:00";
+    Dusk2Dawn::min2str(SSTime24, SSTime);
+    Blynk.virtualWrite(SSTimeCheck,String(SSTime24)+" C1");
+    WeatherComp=1;
+    Blynk.virtualWrite(WeaConp,WeatherComp);
+  }
+  else if(Condition == "Cloudy" || Condition == "Fog" || Condition == "Rain" || Condition == "Light Drizzle" || Condition == "Drizzle")
   {
     SSTime-=20;
     char SSTime24[] = "00:00";
     Dusk2Dawn::min2str(SSTime24, SSTime);
-    Blynk.virtualWrite(SSTimeCheck,String(SSTime24)+" C");
-    WeatherComp=1;
-    Blynk.virtualWrite(WeaConp,1);
+    Blynk.virtualWrite(SSTimeCheck,String(SSTime24)+" C2");
+    WeatherComp=2;
+    Blynk.virtualWrite(WeaConp,WeatherComp);
   }
   else
   {
     WeatherComp=0;
-    Blynk.virtualWrite(WeaConp,0);
+    Blynk.virtualWrite(WeaConp,WeatherComp);
   }
 }
 
@@ -178,7 +188,6 @@ void SSTCheck()//SST main & Time keeper
   if((CurTime>=SRTime)&&(SRTcount<5))//Sunrise checker
   {
    SRTcrow();
-   SRTcount++;
    Blynk.virtualWrite(SRTp,SRTcount);
   }
 
@@ -193,7 +202,8 @@ void SSTCheck()//SST main & Time keeper
     SRTime= Home.sunrise(year(), month(), day(), false)+30-10;// -10 for first light
     SRTcount=0;
     Blynk.virtualWrite(SRTp,SRTcount);//Reset Crow Count
-    Blynk.virtualWrite(WeaConp,0);//Reset Weather Compensation pin
+    WeatherComp=0;
+    Blynk.virtualWrite(WeaConp,WeatherComp);//Reset Weather Compensation pin
     GN=7;// Reset GNp
     Blynk.virtualWrite(GNp,GN);
     SSTcheck=5;
@@ -208,29 +218,32 @@ void SSTCheck()//SST main & Time keeper
 
 void SRTcrow()
 {
-  tone(D8,NOTE_A7);
-  delay(300);
-  noTone(D8);
-  delay(100);
-  tone(D8,NOTE_AS7);
-  delay(250);
-  noTone(D8);
-  delay(30);
-  tone(D8,NOTE_AS7);
-  delay(250);
-  noTone(D8);
-  delay(150);
-  tone(D8,NOTE_AS7);
-  delay(500);
-  for(int i=NOTE_AS7;i>=NOTE_GS7;i-=2)
+  if(CrowAlt)
   {
-    tone(D8,i);
-    delay(8);
-    }
-  noTone(D8);
+    tone(D8,NOTE_A7);
+    delay(300);
+    noTone(D8);
+    delay(100);
+    tone(D8,NOTE_AS7);
+    delay(250);
+    noTone(D8);
+    delay(30);
+    tone(D8,NOTE_AS7);
+    delay(250);
+    noTone(D8);
+    delay(150);
+    tone(D8,NOTE_AS7);
+    delay(500);
+    for(int i=NOTE_AS7;i>=NOTE_GS7;i-=2)
+    {
+      tone(D8,i);
+      delay(8);
+      }
+    noTone(D8);
+    SRTcount++;
+  }
+  CrowAlt=!CrowAlt;// Increase time between crows to 1 minute
 }
-
-
 
 ///////////////////////////////////////////////////////////////
 
@@ -281,6 +294,7 @@ BLYNK_WRITE(Buzztestp)
     noTone(D8);
   }
 }
+
 ////////////////////////////////////////////////////////////////////
 
 //////////////////////Welcome Back Home/////////////////////////
@@ -407,7 +421,7 @@ void setup()
 {
   Serial.begin(9600);
   Serial.println();
-  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.7.4 for i-WSS-");
+  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.7.6 for i-WSS-");
   Serial.println("Booting up...");
   pinMode(D4,OUTPUT);//Noconnection LED
   digitalWrite(D4,LOW);
