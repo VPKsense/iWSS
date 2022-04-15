@@ -9,9 +9,9 @@
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 
-char auth[] = "oKPdLYfuKUOkgUS6bhhNL43oetoQNBTj";
-char ssid[] = "2PoInT1";
-char pass[] = "akhilesh";
+char auth[] = "###";
+char ssid[] = "###";
+char pass[] = "###";
 
 //////V pins Define//////
 #define Gatep V2
@@ -476,7 +476,7 @@ void OTA()
   }
 
   ArduinoOTA.setHostname("i-WSS");
-  ArduinoOTA.setPassword((const char *)"sensepro");
+  ArduinoOTA.setPassword((const char *)"###");
   
   ArduinoOTA.onStart([]() {
     String type;
