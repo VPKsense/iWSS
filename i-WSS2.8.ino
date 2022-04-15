@@ -44,7 +44,7 @@ int hr,mt;
 ////////////////////////
 
 WidgetRTC rtc;
-BlynkTimer timer; //Delay till final light after sunset
+BlynkTimer timer; //For SST check
 
 //////////////////////Switch Controllers///////////////////////
 
@@ -127,7 +127,7 @@ BLYNK_WRITE(SSTp)//SST store value
 
 BLYNK_WRITE(SSTimeCheck)//SST time store value
 {
-SSTime= Home.sunset(year(), month(), day(), false)+30+15;
+SSTime= Home.sunset(year(), month(), day(), false)+30+10;//30 for time zone and 10 for approx last light
 }
 
 void SSTCheck()//SST main & Time keeper
@@ -161,7 +161,7 @@ BLYNK_WRITE(RARp)//RAR main
   RAR=param.asInt();
   if((RAR==5)&&(RARset==1))
   {
-    Blynk.notify("Looks like it's gonna rain at your home (time: "+ String(hour())+ ":" + String(minute()) + ")");
+    Blynk.notify("Looks like it's gonna rain at your home (Time: "+ String(hour())+ ":" + String(minute()) + ")");
     for(int k=0;k<5;k++)
     {
         tone(D8,4000);
@@ -245,7 +245,7 @@ BLYNK_WRITE(GNp)//GN main
  {Blynk.virtualWrite(Sitoutp,0);
   Blynk.notify("Good night! Sit out light has been turned OFF");
   digitalWrite(D5,HIGH);
-  GN=5;
+  Blynk.virtualWrite(GNp,5);
  }
 }
 
@@ -291,7 +291,7 @@ else{
  delay(1500);
  noTone(D8); 
 Blynk.syncVirtual(Gatep,Sitoutp,SSTsetp,SSTp,RARsetp,WBHsetp,WBHselp,GNsetp,GNp);
-Blynk.notify("I've Reconnected to the server");
+Blynk.notify("I've Reconnected");
 digitalWrite(D4,HIGH);
 conbuz=0;
     }
@@ -301,7 +301,7 @@ void setup()
 {
   Serial.begin(9600);
   Serial.println();
-  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.6.3 for i-WSS-");
+  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.6.4 for i-WSS-");
   Serial.println("Booting up...");
   pinMode(D4,OUTPUT);//Noconnection LED
   digitalWrite(D4,LOW);
