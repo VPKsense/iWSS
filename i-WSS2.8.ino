@@ -134,7 +134,7 @@ BLYNK_WRITE(WeaConp)// To compensate power loss in case of Compensated SST
 BLYNK_WRITE(WeaCon)//SST Weather condition compensation
 {
   Condition=param.asStr();
-  if(Condition == "Haze" || Condition == "Mostly Cloudy")
+  if(Condition == "Haze" || Condition == "Mostly Cloudy" || Condition == "Partly Cloudy")
   {
     SSTime-=10;
     char SSTime24[] = "00:00";
@@ -143,7 +143,8 @@ BLYNK_WRITE(WeaCon)//SST Weather condition compensation
     WeatherComp=1;
     Blynk.virtualWrite(WeaConp,WeatherComp);
   }
-  else if(Condition == "Cloudy" || Condition == "Fog" || Condition == "Rain" || Condition == "Light Drizzle" || Condition == "Drizzle")
+  else if(Condition == "Cloudy" || Condition == "Fog" || Condition == "Rain" || Condition == "Light Drizzle" || 
+          Condition == "Drizzle" || Condition == "Thunderstorm" || Condition == "Light Rain" || Condition == "Heavy Rain")
   {
     SSTime-=20;
     char SSTime24[] = "00:00";
@@ -424,7 +425,7 @@ void setup()
 {
   Serial.begin(9600);
   Serial.println();
-  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.7.7 for i-WSS-");
+  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.7.7(b) for i-WSS-");
   Serial.println("Booting up...");
   pinMode(D4,OUTPUT);//Noconnection LED
   digitalWrite(D4,LOW);
