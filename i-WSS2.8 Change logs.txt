@@ -75,3 +75,6 @@ ALL DONE 09/04/2020
 
 ---Sense OS v1.7.7--- <31/10/2021>
 >OTA Updates enabled
+
+---Sense OS v1.7.7(b)--- <16/06/2022>
+>Added new weather compensation conditions
