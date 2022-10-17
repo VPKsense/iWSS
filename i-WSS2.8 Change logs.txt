@@ -78,3 +78,15 @@ ALL DONE 09/04/2020
 
 ---Sense OS v1.7.7(b)--- <16/06/2022>
 >Added new weather compensation conditions
+
+---Sense OS v1.8.4--- <17/10/2022> <Change of Blynk version - V1.1>
+>Changes according to Blynk v1.1 added
+>Deactivated WBH related function and variables
+>Web API updated
+>Changed switching values that were previously 5 & 7 to 1 & 0
+>Added RNI feature using EEPROM
+>Renamed SSTCheck to MainCheck
+>Reduced sync interval to 30 minutes
+>Split Blynk.begin() to 3 separate functions to avoid blocking at RNI
+>Removed I'm online notification
+>Added connection buzzer
