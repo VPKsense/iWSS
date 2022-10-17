@@ -1,8 +1,8 @@
 #define BLYNK_PRINT Serial
 
-#define BLYNK_TEMPLATE_ID "TMPLAkPzhMB_"
+#define BLYNK_TEMPLATE_ID "###"
 #define BLYNK_DEVICE_NAME "iWSS"
-#define BLYNK_AUTH_TOKEN "2LLVZj-x3_DBoQEd7Oc2B40XJJMqggGk"
+#define BLYNK_AUTH_TOKEN "###"
 
 #include <Dusk2Dawn.h>
 #include <ESP8266WiFi.h>
@@ -14,8 +14,8 @@
 #include <ArduinoOTA.h>
 
 char auth[] = BLYNK_AUTH_TOKEN;
-char ssid[] = "2PoInT0";
-char pass[] = "akhilesh";
+char ssid[] = "###";
+char pass[] = "###";
 
 //////V pins Define//////
 #define Gatep V2
@@ -552,7 +552,7 @@ void OTA()
   }
 
   ArduinoOTA.setHostname("i-WSS");
-  ArduinoOTA.setPassword((const char *)"sensepro");
+  ArduinoOTA.setPassword((const char *)"###");
   
   ArduinoOTA.onStart([]() {
     String type;
