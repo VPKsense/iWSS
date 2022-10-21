@@ -51,7 +51,7 @@ char pass[] = "###";
 ///Support variables/////
 int pstat=0; 
 int MSRs=0,curpowerstat;
-int CurTime,SSTset,SSTime,SSTcheck=2;
+int CurTime,SSTset,SSTime,SSTcheck;
 int Gate,Sitout;
 int RAR,RARset;
 //int WBH,WBHset,WBHsel;
@@ -140,7 +140,7 @@ BLYNK_WRITE(WeaConp)// To compensate power loss in case of Compensated SST
 BLYNK_WRITE(WeaCon)//SST Weather condition compensation
 {
   Condition=param.asStr();
-  if(Condition == "Haze" || Condition == "Mostly Cloudy" || Condition == "Partly Cloudy")
+  if(Condition == "Haze" || Condition == "Mostly Cloudy" || Condition == "Partly Cloudy" || Condition == "Thunder")
   {
     SSTime-=10;
     char SSTime24[] = "00:00";
@@ -208,11 +208,17 @@ void MainCheck()//SST main & Time keeper
     EEPROM.write(3,month());
     EEPROM.commit();
 
-    if(CurTime>=SSTime)
-    digitalWrite(D5,LOW);
+    if(CurTime>=SSTime && CurTime<GNTime)
+    {
+      digitalWrite(D5,LOW);
+      SSTcheck=0;
+    }
  
     if(CurTime>=GNTime)
-    digitalWrite(D5,HIGH);
+    {
+      digitalWrite(D5,HIGH);
+      GN=1;
+    }
   }
   else
   {
@@ -491,14 +497,14 @@ void setup()
 {
   Serial.begin(9600);
   Serial.println();
-  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.8.4 for i-WSS-");
+  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.8.5 for i-WSS-");
   Serial.println("Booting up...");
   pinMode(D4,OUTPUT);//Noconnection LED
   pinMode(D0,OUTPUT);
   EEPROM.begin(512);
   OTA();
   Blynk.connectWiFi(ssid, pass);
-  Blynk.config(auth,IPAddress(68,183,87,221),8080);
+  Blynk.config(auth/*IPAddress(68,183,87,221),8080*/);
   Blynk.connect(5);
   setSyncInterval(30 * 60);// 30minutes
   timer.setInterval(30*1000, MainCheck);//30 seconds
