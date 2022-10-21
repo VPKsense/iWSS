@@ -90,3 +90,7 @@ ALL DONE 09/04/2020
 >Split Blynk.begin() to 3 separate functions to avoid blocking at RNI
 >Removed I'm online notification
 >Added connection buzzer
+
+---Sense OS v1.8.5--- <21/10/2022>
+>Added Thunder condition for weather compensation
+>Added additional for SSTcheck and GNlight for RNI
