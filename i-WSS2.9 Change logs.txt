@@ -1,6 +1,4 @@
-iWSS 2.8
-
----Sense OS v1.0---
+---Sense OS v1.0--- <iWSS 2.8>
 >sunset trigger + notify (final) - DONE (V6/V7(s))
 >time function - DONE
 >perimeter triggered (Beta) - DONE (V10/V11(s)/V12(ss))
@@ -94,3 +92,9 @@ ALL DONE 09/04/2020
 ---Sense OS v1.8.5--- <21/10/2022>
 >Added Thunder condition for weather compensation
 >Added additional for SSTcheck and GNlight for RNI
+
+---Sense OS v1.8.8--- <15/11/2022> <iWSS2.9>
+>Edited weather compensation conditions to include indexOf function to improve accuracy and reduce conditions
+>Added Physical switch for flood light(Change of hardware version)
+>Added support of iWSS Upper module
+>Added All lights on feature - works with Google Assisstant
