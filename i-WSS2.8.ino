@@ -1,7 +1,7 @@
 #define BLYNK_PRINT Serial
 
-#define BLYNK_TEMPLATE_ID "###"
-#define BLYNK_DEVICE_NAME "iWSS"
+#define BLYNK_TEMPLATE_ID "TMPLAkPzhMB_"
+#define BLYNK_DEVICE_NAME "iWSS D"
 #define BLYNK_AUTH_TOKEN "###"
 
 #include <Dusk2Dawn.h>
@@ -39,6 +39,9 @@ char pass[] = "###";
 #define WeaCon V20
 #define SRTp V21
 #define WeaConp V22
+#define Floodp V23
+#define SitoutUp V24
+#define AllOn V25
 ////////////////////////
 
 ///////Crow Notes///////
@@ -66,6 +69,7 @@ String Condition;
 int WeatherComp=0;
 int pflag=0,sflag=0;
 int Shr,Smin;
+int FloodS=0;
 ////////////////////////
 
 WidgetRTC rtc;
@@ -149,8 +153,7 @@ BLYNK_WRITE(WeaCon)//SST Weather condition compensation
     WeatherComp=1;
     Blynk.virtualWrite(WeaConp,WeatherComp);
   }
-  else if(Condition == "Cloudy" || Condition == "Fog" || Condition == "Rain" || Condition == "Light Drizzle" || 
-          Condition == "Drizzle" || Condition == "Thunderstorm" || Condition == "Light Rain" || Condition == "Heavy Rain")
+  else if(Condition == "Cloudy" || Condition == "Fog" || Condition.indexOf("Drizzle")!=-1 || Condition.indexOf("Thunderstorm")!=-1 || Condition.indexOf("Rain")!=-1)
   {
     SSTime-=20;
     char SSTime24[] = "00:00";
@@ -446,6 +449,63 @@ BLYNK_WRITE(DisCounterp){
   
 ///////////////////////////////////////////////
 
+////////////////////ALL ON////////////////////
+
+BLYNK_WRITE(AllOn)
+{
+  int allon=param.asInt();
+  if(allon)
+  {
+    Blynk.virtualWrite(Sitoutp,1);
+    digitalWrite(D5,LOW);
+    delay(100);
+    Blynk.virtualWrite(Gatep,1);
+    digitalWrite(D3,LOW);
+    Blynk.virtualWrite(Floodp,1);
+    delay(100);
+    Blynk.virtualWrite(SitoutUp,1);
+  }
+  else
+  {
+    Blynk.virtualWrite(Sitoutp,0);
+    digitalWrite(D5,HIGH);
+    delay(100);    
+    Blynk.virtualWrite(Gatep,0);
+    digitalWrite(D3,HIGH);
+    Blynk.virtualWrite(Floodp,0);
+    delay(100);    
+    Blynk.virtualWrite(SitoutUp,0);
+  }
+}
+  
+//////////////////////////////////////////////
+
+////////////Flood Light///////////////
+void SwitchCheck()
+{
+    if(!digitalRead(D6) && !FloodS)//for flood light
+  {
+    delay(500);
+    if(!digitalRead(D6))
+    {
+      Blynk.virtualWrite(Floodp,1);
+      Blynk.logEvent("flood_light","Turned On");
+      FloodS=1;
+    }
+  }
+  else if(digitalRead(D6) && FloodS)
+  {
+    delay(500);
+    if(digitalRead(D6))
+    {
+      Blynk.virtualWrite(Floodp,0);
+      Blynk.logEvent("flood_light","Turned Off");
+      FloodS=0;
+    }
+  }
+}
+//////////////////////////////////////
+
 BLYNK_CONNECTED()
 { if(!pstat)
   {
@@ -497,17 +557,19 @@ void setup()
 {
   Serial.begin(9600);
   Serial.println();
-  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.8.5 for i-WSS-");
+  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.8.8b for i-WSS(D)-");
   Serial.println("Booting up...");
   pinMode(D4,OUTPUT);//Noconnection LED
   pinMode(D0,OUTPUT);
+  pinMode(D6, INPUT_PULLUP);  //For Flood light
   EEPROM.begin(512);
   OTA();
   Blynk.connectWiFi(ssid, pass);
   Blynk.config(auth/*IPAddress(68,183,87,221),8080*/);
   Blynk.connect(5);
   setSyncInterval(30 * 60);// 30minutes
-  timer.setInterval(30*1000, MainCheck);//30 seconds
+  timer.setInterval(30*1000, MainCheck);//For main functionality
+  timer.setInterval(1*1000, SwitchCheck);//For flood light functionality  
   pinMode(D3,OUTPUT);//gate
   pinMode(D5,OUTPUT);//sitout
   delay(3000);
@@ -517,6 +579,7 @@ void setup()
     digitalWrite(D3,HIGH);
   }
 }
+
 
 void loop()
 {
@@ -540,7 +603,7 @@ void loop()
         delay(500);}
     conbuz=1;
     }
-  } 
+  }   
 }
 
 
@@ -557,7 +620,7 @@ void OTA()
     ESP.restart();
   }
 
-  ArduinoOTA.setHostname("i-WSS");
+  ArduinoOTA.setHostname("i-WSS-D");
   ArduinoOTA.setPassword((const char *)"###");
   
   ArduinoOTA.onStart([]() {
