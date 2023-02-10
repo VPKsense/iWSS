@@ -461,8 +461,9 @@ BLYNK_WRITE(AllOn)
     delay(100);
     Blynk.virtualWrite(Gatep,1);
     digitalWrite(D3,LOW);
+    delay(100);    
     Blynk.virtualWrite(Floodp,1);
-    delay(100);
+    delay(150);
     Blynk.virtualWrite(SitoutUp,1);
   }
   else
@@ -472,8 +473,9 @@ BLYNK_WRITE(AllOn)
     delay(100);    
     Blynk.virtualWrite(Gatep,0);
     digitalWrite(D3,HIGH);
+    delay(100);
     Blynk.virtualWrite(Floodp,0);
-    delay(100);    
+    delay(150);    
     Blynk.virtualWrite(SitoutUp,0);
   }
 }
@@ -489,7 +491,6 @@ void SwitchCheck()
     if(!digitalRead(D6))
     {
       Blynk.virtualWrite(Floodp,1);
-      Blynk.logEvent("flood_light","Turned On");
       FloodS=1;
     }
   }
@@ -499,7 +500,6 @@ void SwitchCheck()
     if(digitalRead(D6))
     {
       Blynk.virtualWrite(Floodp,0);
-      Blynk.logEvent("flood_light","Turned Off");
       FloodS=0;
     }
   }
@@ -557,7 +557,7 @@ void setup()
 {
   Serial.begin(9600);
   Serial.println();
-  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.8.8b for i-WSS(D)-");
+  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.9.0 for i-WSS(D)-");
   Serial.println("Booting up...");
   pinMode(D4,OUTPUT);//Noconnection LED
   pinMode(D0,OUTPUT);
