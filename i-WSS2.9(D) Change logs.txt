@@ -98,3 +98,8 @@ ALL DONE 09/04/2020
 >Added Physical switch for flood light(Change of hardware version)
 >Added support of iWSS Upper module
 >Added All lights on feature - works with Google Assisstant
+
+---Sense OS v1.9.0--- <01/01/2023>
+>Fixed Floodlight bug of random triggering by introducing timer based check (v1.8.8b)-21/11/22
+>Removed notification for flood light
+>Added more delays for All_on functions
