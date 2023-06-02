@@ -1,4 +1,0 @@
----Sense OS v1.0--- <15/11/2022> <For i-WSS(D) SenseOSv1.8.8>
->Initial Build
-
-Circuitry DONE 13/11/2022
