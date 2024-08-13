@@ -5,7 +5,7 @@
 >buzzer for rain + notify (final) - DONE (V8/V9(s))
 >Smoother voice recognition - DONE
 >Mains status reporter (Alpha) - DONE  (V4(s)/V5)
->Improved circuitary - DONE
+>Improved circuitry - DONE
 
 ALL DONE 09/04/2020
 
@@ -91,7 +91,7 @@ ALL DONE 09/04/2020
 
 ---Sense OS v1.8.5--- <21/10/2022>
 >Added Thunder condition for weather compensation
->Added additional for SSTcheck and GNlight for RNI
+>Added additional variable for SSTcheck and GNlight for RNI
 
 ---Sense OS v1.8.8--- <15/11/2022> <iWSS2.9>
 >Edited weather compensation conditions to include indexOf function to improve accuracy and reduce conditions
@@ -103,3 +103,15 @@ ALL DONE 09/04/2020
 >Fixed Floodlight bug of random triggering by introducing timer based check (v1.8.8b)-21/11/22
 >Removed notification for flood light
 >Added more delays for All_on functions
+
+---Sense OS v1.9.8--- <13/08/2024>
+>Updated Blynk library
+>Removed Weather compensation and Rain alert support via IFTTT
+>Added WeatherAPI based weather compensation and Rain alert support
+>Modified Weather compensation check function to use Weathercodes instead of string comparison of Weather conditions
+>OTA update password via variable
+>Reduced EEPROM initialisation size to 20 rather than 512
+>Fixed a minor bug in Flood light so as to update the status of physical switch when restarted at no internet
+>Added variable checks for GN and SST light for RNI
+>Added year() for EEPROM write and read
+>Code cleanup

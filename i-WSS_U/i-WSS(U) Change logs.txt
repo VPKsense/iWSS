@@ -2,3 +2,8 @@
 >Initial Build
 
 Circuitry DONE 13/11/2022
+
+---Sense OS v1.0.2--- <13/08/2024>
+>Updated Blynk library
+>OTA update password via variable
+>Code cleanup

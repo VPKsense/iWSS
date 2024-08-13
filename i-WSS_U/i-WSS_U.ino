@@ -1,18 +1,17 @@
 #define BLYNK_PRINT Serial
 
 #define BLYNK_TEMPLATE_ID "TMPLiwzn1ooT"
-#define BLYNK_DEVICE_NAME "iWSS U"
+#define BLYNK_TEMPLATE_NAME "iWSS U"
 #define BLYNK_AUTH_TOKEN "###"
 
-#include <ESP8266WiFi.h>
 #include <BlynkSimpleEsp8266.h>
-#include <ESP8266mDNS.h>
-#include <WiFiUdp.h>
 #include <ArduinoOTA.h>
+#include <ESP8266mDNS.h>
 
 char auth[] = BLYNK_AUTH_TOKEN;
 char ssid[] = "###";
 char pass[] = "###";
+const char *OTApass = "###";
 
 //////V pins Define//////
 #define Sitoutp V1
@@ -26,7 +25,6 @@ int dat;
 long rssi;
 ////////////////////////
 
-//BlynkTimer timer;
 
 BLYNK_WRITE(Floodp)
 {
@@ -71,15 +69,14 @@ BLYNK_CONNECTED()
 void setup() {
   Serial.begin(9600);
   Serial.println();
-  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.0.0 for i-WSS(U)-");
+  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.0.2 for i-WSS(U)-");
   Serial.println("Booting up...");
   pinMode(D4,OUTPUT);//Noconnection LED
   pinMode(D0,OUTPUT);
   OTA();
   Blynk.connectWiFi(ssid, pass);
-  Blynk.config(auth/*IPAddress(68,183,87,221),8080*/);
+  Blynk.config(auth);
   Blynk.connect(5);
-  //timer.setInterval(30*1000, {Name});//30 seconds
   pinMode(D3,OUTPUT);//Flood light
   digitalWrite(D3,HIGH);
   pinMode(D5,OUTPUT);//Sitout light
@@ -89,7 +86,6 @@ void setup() {
 
 void loop()
 {
-  //timer.run();
   Blynk.run();
   ArduinoOTA.handle();
   if (!Blynk.connected()) 
@@ -114,7 +110,7 @@ void OTA()
   }
 
   ArduinoOTA.setHostname("i-WSS-U");
-  ArduinoOTA.setPassword((const char *)"###");
+  ArduinoOTA.setPassword(OTApass);
   
   ArduinoOTA.onStart([]() {
     String type;
