@@ -65,8 +65,9 @@ int WeatherComp=0;
 int pflag=0,sflag=0;
 int Shr,Smin;
 int FloodS=0;
-int WeatherCode=0,CloudCover=0,Raining=0, WeaCompCheck=0;
+int CloudCover=0,Raining=0, WeaCompCheck=0;
 String WeatherCondition;
+int ReqSuccess = 0;
 ////////////////////////
 
 WidgetRTC rtc;
@@ -141,8 +142,7 @@ BLYNK_WRITE(WeaConp)// To compensate power loss in case of Compensated SST
 void WeatherCompCheck()//SST Weather condition compensation
 {
   WeatherCheck();
-  if(WeatherCode == 1063 || WeatherCode == 1087 || WeatherCode == 1186 || WeatherCode == 1189
-  || WeatherCode == 1243 || WeatherCode == 1273 || (CloudCover >= 50 && CloudCover < 80))
+  if(CloudCover >= 50 && CloudCover < 80)
   {
     SSTime-=10;
     char SSTime24[] = "00:00";
@@ -151,8 +151,7 @@ void WeatherCompCheck()//SST Weather condition compensation
     WeatherComp=1;
     Blynk.virtualWrite(WeaConp,WeatherComp);
   }
-  else if(WeatherCode == 1006 || WeatherCode == 1009 || WeatherCode == 1030 || WeatherCode == 1135
-  || WeatherCode == 1192 || WeatherCode == 1195 || WeatherCode == 1246 || WeatherCode == 1276 || CloudCover >= 80)
+  else if(CloudCover >= 80)
   {
     SSTime-=20;
     char SSTime24[] = "00:00";
@@ -228,6 +227,7 @@ void MainCheck()//SST main & Time keeper
       SSTime= Home.sunset(year(), month(), day(), false)+30+10;//30 for time zone and 10 for approx last light
       GN=0;// Reset GNpin
       SSTcheck=1;
+      WeaCompCheck=0;
       EEPROM.write(5,SSTime/60);
       EEPROM.write(6,SSTime%60);
       EEPROM.commit();
@@ -245,7 +245,8 @@ void MainCheck()//SST main & Time keeper
     if((CurTime>= (SSTime-30)) && !WeaCompCheck)//Weather compensation before 30min of SST
     {
       WeatherCompCheck();
-      WeaCompCheck=1;
+      if(ReqSuccess)
+        WeaCompCheck=1;
     }
     
     if((CurTime>=SSTime)&&(SSTcheck==1))//Sunset checker
@@ -273,6 +274,7 @@ void MainCheck()//SST main & Time keeper
       SRTcount=0;
       Blynk.virtualWrite(SRTp,SRTcount);//Reset Crow Count
       WeatherComp=0;
+      WeaCompCheck=0;
       Blynk.virtualWrite(WeaConp,WeatherComp);//Reset Weather Compensation pin
       GN=0;// Reset GNpin
       Blynk.virtualWrite(GNp,GN);
@@ -505,6 +507,7 @@ void WeatherCheck()
 
   if (httpCode > 0 && httpCode == HTTP_CODE_OK)
   { 
+    ReqSuccess = 1;
     String payload = http.getString();
     
     JsonDocument doc;// Parse JSON object
@@ -513,11 +516,9 @@ void WeatherCheck()
       Serial.print("deserializeJson() failed: "+ String(error.f_str()));
       return;
     }                
-    WeatherCode = int(doc["current"]["condition"]["code"]);//Extract
-    CloudCover = int(doc["current"]["cloud"]);
+    CloudCover = int(doc["current"]["cloud"]);//Extract
     WeatherCondition = String(doc["current"]["condition"]["text"]);
-
-    if(CloudCover >= 80 && ((WeatherCondition.indexOf("drizzle")!=-1 && CloudCover >=85) 
+    if(CloudCover >= 75 && ((WeatherCondition.indexOf("drizzle")!=-1 && CloudCover >=80) 
     || WeatherCondition.indexOf("rain")!=-1 || WeatherCondition.indexOf("Rain")!=-1)) //Rain monitor
     {
       if(!Raining)
@@ -530,8 +531,10 @@ void WeatherCheck()
       Raining = 0;
   } 
   else 
-    Serial.println("Error on HTTP request: " + String(httpCode));
-  
+    {
+      ReqSuccess = 0;//Error
+      Serial.println("Error on HTTP request: " + String(httpCode));
+    }
   http.end(); // Close connection
 }
 
@@ -605,7 +608,7 @@ void setup()
 {
   Serial.begin(9600);
   Serial.println();
-  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.9.8 for i-WSS(D)-");
+  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.9.9 for i-WSS(D)-");
   Serial.println("Booting up...");
   pinMode(D4,OUTPUT);//No connection LED
   pinMode(D0,OUTPUT);

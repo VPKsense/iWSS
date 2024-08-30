@@ -110,8 +110,13 @@ ALL DONE 09/04/2020
 >Added WeatherAPI based weather compensation and Rain alert support
 >Modified Weather compensation check function to use Weathercodes instead of string comparison of Weather conditions
 >OTA update password via variable
->Reduced EEPROM initialisation size to 20 rather than 512
+>Reduced EEPROM initialisation size to 20 from 512
 >Fixed a minor bug in Flood light so as to update the status of physical switch when restarted at no internet
->Added variable checks for GN and SST light for RNI
+>Added variable checks for GN and SST light at RNI
 >Added year() for EEPROM write and read
 >Code cleanup
+
+---Sense OS v1.9.9--- <30/08/2024>
+>Added a ReqSuccess flag to make sure the Weather data for Weather compensation at SST is successfully retrieved
+>Removed Weather compensation at SST using Weather codes
+>Modified Cloudcovers for Rain alert to 75 and 80 (for drizzle)
