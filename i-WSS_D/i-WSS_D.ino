@@ -48,6 +48,17 @@ const char *OTApass = "###";
 //A AS AS AS-GS
 ////////////////////////
 
+//////Digital Pins//////
+#define OnBoardLed D4
+#define RLed D0
+#define GLed D1
+#define BLed D2
+#define SitoutDP D3
+#define GateDP D5
+#define FloodDP D6
+#define BuzzDP D8
+////////////////////////
+
 ///Support variables/////
 int pstat=0; 
 int MSRs=0,curpowerstat;
@@ -78,30 +89,30 @@ BlynkTimer timer; //For SST check
 BLYNK_WRITE(Gatep)
 { Gate=param.asInt();
 if(Gate)
-{digitalWrite(D3,LOW);
+{digitalWrite(GateDP,LOW);
 }
 else if(!Gate)
-{digitalWrite(D3,HIGH);}
+{digitalWrite(GateDP,HIGH);}
 }
 
 BLYNK_WRITE(Sitoutp)
 { Sitout=param.asInt();
 if(Sitout)
-{digitalWrite(D5,LOW);
+{digitalWrite(SitoutDP,LOW);
 }
 else if(!Sitout)
-{digitalWrite(D5,HIGH);
+{digitalWrite(SitoutDP,HIGH);
 }
 }
 
 //////////////////////////////////////////////////////////////
 
-////////////////MAINS STATUS REPORTER (BETA)//////////////////
+//////////////MAINS STATUS REPORTER (iWSS only)///////////////
 
 BLYNK_WRITE(MSRp)//Switch to enable Mains Status Reporter 
 { MSRs=param.asInt();
 if(MSRs)
-{Blynk.logEvent("mains","Looks like Mains Power got interrupted");
+{Blynk.logEvent("mains","Looks like iWSS Power got interrupted");
 }
 }
 
@@ -176,7 +187,7 @@ void SSTmain()//Switching function
   if(SSTset)
   {
   Blynk.virtualWrite(Sitoutp,1);
-  digitalWrite(D5,LOW);
+  digitalWrite(SitoutDP,LOW);
   if(!WeatherComp)
   Blynk.logEvent("lights","Good Evening! Sit out light has been turned ON");
   else
@@ -212,13 +223,13 @@ void MainCheck()//SST main & Time keeper
 
     if((CurTime>=SSTime)&&(SSTcheck==1))
     {
-      digitalWrite(D5,LOW);
+      digitalWrite(SitoutDP,LOW);
       SSTcheck=0;
     }
  
     if((CurTime>=GNTime)&&(GN==0))
     {
-      digitalWrite(D5,HIGH);
+      digitalWrite(SitoutDP,HIGH);
       GN=1;
     }
     
@@ -295,6 +306,9 @@ void MainCheck()//SST main & Time keeper
     EEPROM.write(3,month());
     EEPROM.write(4,year());
     EEPROM.commit();
+
+    if(Blynk.connected())
+      UpperStatusChecker(0);
   }
 }
 
@@ -302,26 +316,26 @@ void SRTcrow()
 {
   if(CrowAlt)
   {
-    tone(D8,NOTE_A7);
+    tone(BuzzDP,NOTE_A7);
     delay(300);
-    noTone(D8);
+    noTone(BuzzDP);
     delay(100);
-    tone(D8,NOTE_AS7);
+    tone(BuzzDP,NOTE_AS7);
     delay(250);
-    noTone(D8);
+    noTone(BuzzDP);
     delay(30);
-    tone(D8,NOTE_AS7);
+    tone(BuzzDP,NOTE_AS7);
     delay(250);
-    noTone(D8);
+    noTone(BuzzDP);
     delay(150);
-    tone(D8,NOTE_AS7);
+    tone(BuzzDP,NOTE_AS7);
     delay(500);
     for(int i=NOTE_AS7;i>=NOTE_GS7;i-=2)
     {
-      tone(D8,i);
+      tone(BuzzDP,i);
       delay(8);
       }
-    noTone(D8);
+    noTone(BuzzDP);
     SRTcount++;
   }
   CrowAlt=!CrowAlt;// Increase time between crows to 1 minute
@@ -344,17 +358,17 @@ BLYNK_WRITE(RARp)//RAR main
     Blynk.logEvent("rain",String("Looks like it's gonna rain at your home (Time: ")+ String(CurTime24) + ")");
     for(int k=0;k<5;k++)
     {
-        tone(D8,4000);
+        tone(BuzzDP,4000);
         delay(3000);
-        noTone(D8);
+        noTone(BuzzDP);
         delay(500);
-        tone(D8,4000);
+        tone(BuzzDP,4000);
         delay(150);
-        noTone(D8);
+        noTone(BuzzDP);
         delay(80);
-        tone(D8,4000);
+        tone(BuzzDP,4000);
         delay(150);
-        noTone(D8);
+        noTone(BuzzDP);
         delay(1000);
     }
   }
@@ -370,10 +384,10 @@ BLYNK_WRITE(Buzztestp)
   int buzz=param.asInt();
   if(buzz)
   {
-    tone(D8,4000);
+    tone(BuzzDP,4000);
   }
   else {
-    noTone(D8);
+    noTone(BuzzDP);
   }
 }
 
@@ -397,7 +411,7 @@ void GNlight()//GN main
    {
     Blynk.virtualWrite(Sitoutp,0);
     Blynk.logEvent("lights","Good night! Sit out light has been turned OFF");
-    digitalWrite(D5,HIGH);
+    digitalWrite(SitoutDP,HIGH);
     GN=1;
     Blynk.virtualWrite(GNp,GN);
    }
@@ -438,10 +452,10 @@ BLYNK_WRITE(AllOn)
   if(allon)
   {
     Blynk.virtualWrite(Sitoutp,1);
-    digitalWrite(D5,LOW);
+    digitalWrite(SitoutDP,LOW);
     delay(100);
     Blynk.virtualWrite(Gatep,1);
-    digitalWrite(D3,LOW);
+    digitalWrite(GateDP,LOW);
     delay(100);    
     Blynk.virtualWrite(Floodp,1);
     delay(150);
@@ -450,10 +464,10 @@ BLYNK_WRITE(AllOn)
   else
   {
     Blynk.virtualWrite(Sitoutp,0);
-    digitalWrite(D5,HIGH);
+    digitalWrite(SitoutDP,HIGH);
     delay(100);    
     Blynk.virtualWrite(Gatep,0);
-    digitalWrite(D3,HIGH);
+    digitalWrite(GateDP,HIGH);
     delay(100);
     Blynk.virtualWrite(Floodp,0);
     delay(150);    
@@ -468,19 +482,21 @@ void SwitchCheck()
 {
   if (Blynk.connected())
   {
-    if(!FloodS && !digitalRead(D6))//for flood light
+    if(!FloodS && !digitalRead(FloodDP))//for flood light
     {
-      delay(500);
-      if(!digitalRead(D6))
+      delay(300);
+      UpperStatusChecker(1);
+      if(!digitalRead(FloodDP))
       {
         Blynk.virtualWrite(Floodp,1);
         FloodS=1;
       }
     }
-    else if(FloodS && digitalRead(D6))
+    else if(FloodS && digitalRead(FloodDP))
     {
-      delay(500);
-      if(digitalRead(D6))
+      delay(300);
+      UpperStatusChecker(1);
+      if(digitalRead(FloodDP))
       {
         Blynk.virtualWrite(Floodp,0);
         FloodS=0;
@@ -493,49 +509,95 @@ BLYNK_WRITE(Floodp)
 {
   FloodS = param.asInt();
 }
+
+void UpperStatusChecker(int FromSwitch)//Checks the online status of iWSS(U)
+{
+  HTTPClient http;
+  WiFiClient client;
+  String url = "http://68.183.87.221/external/api/isHardwareConnected?token=XesCJ7YxSjCeLQg6y7Df8qss7ZrjYvM0"; 
+  
+  http.begin(client,url);
+  int httpCode = http.GET();
+
+  if(httpCode == HTTP_CODE_OK)
+  {
+    String RData = http.getString();
+    if(RData == "true")
+      {
+        digitalWrite(RLed,LOW);
+      }
+    else
+      {
+        digitalWrite(RLed,HIGH);
+        digitalWrite(GLed,LOW);
+        if(FromSwitch)
+        {
+          tone(BuzzDP,4000);
+          delay(150);
+          noTone(BuzzDP);
+          delay(80);
+          tone(BuzzDP,4000);
+          delay(150);
+          noTone(BuzzDP);
+          delay(500);
+        }
+      }
+  }
+  else
+    Serial.println("HTTP response error: " + String(httpCode));
+  http.end();
+}
+
 //////////////////////////////////////
 
 /////////////////Weather Checker and Rain monitor/////////////////
 void WeatherCheck()
 {
-  HTTPClient http;
-  WiFiClient client;
-  String url = "http://api.weatherapi.com/v1/current.json?key=f3addcfaa4d34660826125743240308&q=10.3243,76.2007&aqi=no"; 
-  
-  http.begin(client,url);
-  int httpCode = http.GET(); // Make the request
+  if(Blynk.connected())
+  {
+    HTTPClient http;
+    WiFiClient client;
+    String url = "http://api.weatherapi.com/v1/current.json?key=f3addcfaa4d34660826125743240308&q=10.3243,76.2007&aqi=no"; 
 
-  if (httpCode > 0 && httpCode == HTTP_CODE_OK)
-  { 
-    ReqSuccess = 1;
-    String payload = http.getString();
-    
-    JsonDocument doc;// Parse JSON object
-    DeserializationError error = deserializeJson(doc, payload);
-    if (error) {
-      Serial.print("deserializeJson() failed: "+ String(error.f_str()));
-      return;
-    }                
-    CloudCover = int(doc["current"]["cloud"]);//Extract
-    WeatherCondition = String(doc["current"]["condition"]["text"]);
-    if(CloudCover >= 75 && ((WeatherCondition.indexOf("drizzle")!=-1 && CloudCover >=80) 
-    || WeatherCondition.indexOf("rain")!=-1 || WeatherCondition.indexOf("Rain")!=-1)) //Rain monitor
+    http.begin(client,url);
+    int httpCode = http.GET(); // Make the request
+
+    if (httpCode == HTTP_CODE_OK)
     {
-      if(!Raining)
-      {
-        RainAlertWR();
-        Raining = 1;
+      ReqSuccess = 1;
+      String payload = http.getString();
+      
+      JsonDocument doc;// Parse JSON object
+      DeserializationError error = deserializeJson(doc, payload);
+      if (error) {
+        Serial.print("deserializeJson() failed: "+ String(error.f_str()));
+        return;
       }
-    }
-    else
-      Raining = 0;
-  } 
-  else 
-    {
-      ReqSuccess = 0;//Error
-      Serial.println("Error on HTTP request: " + String(httpCode));
-    }
-  http.end(); // Close connection
+      CloudCover = int(doc["current"]["cloud"]);//Extract
+      WeatherCondition = String(doc["current"]["condition"]["text"]);
+      if(CloudCover >= 75 && ((WeatherCondition.indexOf("drizzle")!=-1 && CloudCover >=80) 
+      || WeatherCondition.indexOf("rain")!=-1 || WeatherCondition.indexOf("Rain")!=-1)) //Rain monitor
+      {
+        if(!Raining)
+        {
+          RainAlertWR();
+          Raining = 1;
+          digitalWrite(GLed,HIGH);
+        }
+      }
+      else if (CloudCover <= 65 || (WeatherCondition.indexOf("drizzle")!=-1 && CloudCover <=70))
+      {
+        Raining = 0;
+        digitalWrite(GLed,LOW);
+      }
+    } 
+    else 
+      {
+        ReqSuccess = 0;//Error
+        Serial.println("Error on HTTP request: " + String(httpCode));
+      }
+    http.end(); // Close connection
+  }
 }
 
 void RainAlertWR() 
@@ -547,7 +609,7 @@ void RainAlertWR()
   http.begin(client,url);
   int httpCode = http.GET();
 
-  if(httpCode < 0 || httpCode != HTTP_CODE_OK)
+  if(httpCode != HTTP_CODE_OK)
     Serial.println("HTTP response error: " + String(httpCode));
 
   http.end();
@@ -564,43 +626,45 @@ BLYNK_CONNECTED()
   Blynk.syncVirtual(Gatep,Sitoutp,MSRp,WeaConp,SSTp,SSTsetp,SSTimeCheck,RARsetp,GNsetp,GNp,Buzsetp,DisCounterp,SRTp,Floodp);
   pstat=1;
   pflag=1;//for Restart at No Internet
-  digitalWrite(D4,HIGH);
-  digitalWrite(D0,HIGH);
-  tone(D8,4000);//Connection buzzer
+  digitalWrite(OnBoardLed,HIGH);
+  digitalWrite(BLed,LOW);
+  tone(BuzzDP,4000);//Connection buzzer
   delay(150);
-  noTone(D8);
+  noTone(BuzzDP);
   delay(80);
-  tone(D8,4000);
+  tone(BuzzDP,4000);
   delay(150);
-  noTone(D8);
+  noTone(BuzzDP);
   delay(80);
-  tone(D8,4000);
+  tone(BuzzDP,4000);
   delay(150);
-  noTone(D8);
+  noTone(BuzzDP);
   }
   else
   {
     if(conbuzstat==1)
     {
-      tone(D8,4000);//Reconnection buzzer
+      tone(BuzzDP,4000);//Reconnection buzzer
       delay(150);
-      noTone(D8);
+      noTone(BuzzDP);
       delay(80);
-      tone(D8,4000);
+      tone(BuzzDP,4000);
       delay(150);
-      noTone(D8);
+      noTone(BuzzDP);
       delay(200);
-      tone(D8,4000);
+      tone(BuzzDP,4000);
       delay(1500);
-      noTone(D8);
+      noTone(BuzzDP);
       Blynk.logEvent("internet","I've Reconnected");
     } 
     Blynk.syncVirtual(Gatep,Sitoutp,SSTsetp,SSTp,RARsetp,GNsetp,GNp,Buzsetp,Floodp);
-    digitalWrite(D4,HIGH);
-    digitalWrite(D0,HIGH);
+    digitalWrite(OnBoardLed,HIGH);
+    digitalWrite(BLed,LOW);
     conbuz=0;
     DisCount++;
     Blynk.virtualWrite(DisCounterp,DisCount); //Count no. of disconnections in  a day
+    if(Raining)
+      digitalWrite(GLed,HIGH);
   }
 }
 
@@ -608,11 +672,14 @@ void setup()
 {
   Serial.begin(9600);
   Serial.println();
-  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.9.9 for i-WSS(D)-");
+  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v2.0.7 for i-WSS(D)-");
   Serial.println("Booting up...");
-  pinMode(D4,OUTPUT);//No connection LED
-  pinMode(D0,OUTPUT);
-  pinMode(D6, INPUT_PULLUP);  //For Flood light
+  pinMode(OnBoardLed,OUTPUT);//No connection LED
+  pinMode(BLed,OUTPUT);
+  digitalWrite(BLed,HIGH);
+  pinMode(RLed,OUTPUT);//Upper Status LED
+  pinMode(GLed,OUTPUT);//Rain LED
+  pinMode(FloodDP, INPUT_PULLUP);
   EEPROM.begin(20);
   OTA();
   Blynk.connectWiFi(ssid, pass);
@@ -622,13 +689,13 @@ void setup()
   timer.setInterval(30*1000, MainCheck);//For main functionality - 30s
   timer.setInterval(1*1000, SwitchCheck);//For flood light functionality - 1s  
   timer.setInterval(60*1000*16, WeatherCheck);//For weather check - rain & cloud cover - 16min
-  pinMode(D3,OUTPUT);//gate
-  pinMode(D5,OUTPUT);//sitout
+  pinMode(GateDP,OUTPUT);
+  pinMode(SitoutDP,OUTPUT);
   delay(3000);
   if(!Blynk.connected())
   {
-    digitalWrite(D5,HIGH);
-    digitalWrite(D3,HIGH);
+    digitalWrite(SitoutDP,HIGH);
+    digitalWrite(GateDP,HIGH);
   }
 }
 
@@ -640,18 +707,20 @@ void loop()
   ArduinoOTA.handle();
   if (!Blynk.connected()) 
   {  
-    digitalWrite(D4,LOW);
-    digitalWrite(D0,LOW);
+    digitalWrite(OnBoardLed,LOW);
+    digitalWrite(BLed,HIGH);
+    digitalWrite(RLed,LOW);
+    digitalWrite(GLed,LOW);
     if((conbuz==0)&&(conbuzstat==1))
     {
         for(int i=0;i<5;i++)
-        {tone(D8,4000);
+        {tone(BuzzDP,4000);
         delay(150);
-        noTone(D8);
+        noTone(BuzzDP);
         delay(80);
-        tone(D8,4000);
+        tone(BuzzDP,4000);
         delay(150);
-        noTone(D8);
+        noTone(BuzzDP);
         delay(500);}
     conbuz=1;
     }

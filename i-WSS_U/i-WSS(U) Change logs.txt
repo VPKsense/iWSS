@@ -7,3 +7,6 @@ Circuitry DONE 13/11/2022
 >Updated Blynk library
 >OTA update password via variable
 >Code cleanup
+
+---Sense OS v1.0.3--- <17/10/2024>
+>Added alias for Digital pins for easy reference

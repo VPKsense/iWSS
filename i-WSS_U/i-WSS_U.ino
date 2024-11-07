@@ -19,6 +19,13 @@ const char *OTApass = "###";
 #define RSSIp V3
 ////////////////////////
 
+//////Digital Pins//////
+#define OnBoardLed1 D0
+#define OnBoardLed2 D4
+#define FloodDP D3
+#define SitoutDP D5
+////////////////////////
+
 ///Support variables/////
 int pstat=0; 
 int dat;
@@ -30,18 +37,18 @@ BLYNK_WRITE(Floodp)
 {
   dat=param.asInt();
   if(dat)
-  digitalWrite(D3,LOW);
+  digitalWrite(FloodDP,LOW);
   else
-  digitalWrite(D3,HIGH);
+  digitalWrite(FloodDP,HIGH);
 }
 
 BLYNK_WRITE(Sitoutp)
 {
   dat=param.asInt();
   if(dat)
-  digitalWrite(D5,LOW);
+  digitalWrite(SitoutDP,LOW);
   else
-  digitalWrite(D5,HIGH);
+  digitalWrite(SitoutDP,HIGH);
 }
 
 BLYNK_WRITE(RSSIp)
@@ -55,32 +62,32 @@ BLYNK_CONNECTED()
   {
   Blynk.syncVirtual(Sitoutp,Floodp);
   pstat=1;
-  digitalWrite(D4,HIGH);
-  digitalWrite(D0,HIGH);
+  digitalWrite(OnBoardLed2,HIGH);
+  digitalWrite(OnBoardLed1,HIGH);
   }
   else
   {
     Blynk.syncVirtual(Sitoutp,Floodp);
-    digitalWrite(D4,HIGH);
-    digitalWrite(D0,HIGH);
+    digitalWrite(OnBoardLed2,HIGH);
+    digitalWrite(OnBoardLed1,HIGH);
   }
 }
 
 void setup() {
   Serial.begin(9600);
   Serial.println();
-  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.0.2 for i-WSS(U)-");
+  Serial.println("               -丂𝐞𝐧𝐬𝐞 𝐎𝐒 v1.0.3 for i-WSS(U)-");
   Serial.println("Booting up...");
-  pinMode(D4,OUTPUT);//Noconnection LED
-  pinMode(D0,OUTPUT);
+  pinMode(OnBoardLed2,OUTPUT);//Noconnection LED
+  pinMode(OnBoardLed1,OUTPUT);
   OTA();
   Blynk.connectWiFi(ssid, pass);
   Blynk.config(auth);
   Blynk.connect(5);
-  pinMode(D3,OUTPUT);//Flood light
-  digitalWrite(D3,HIGH);
-  pinMode(D5,OUTPUT);//Sitout light
-  digitalWrite(D5,HIGH);
+  pinMode(FloodDP,OUTPUT);
+  digitalWrite(FloodDP,HIGH);
+  pinMode(SitoutDP,OUTPUT);
+  digitalWrite(SitoutDP,HIGH);
   delay(3000);
 }
 
@@ -90,8 +97,8 @@ void loop()
   ArduinoOTA.handle();
   if (!Blynk.connected()) 
   {  
-    digitalWrite(D4,LOW);
-    digitalWrite(D0,LOW);
+    digitalWrite(OnBoardLed2,LOW);
+    digitalWrite(OnBoardLed1,LOW);
   }   
 }
 

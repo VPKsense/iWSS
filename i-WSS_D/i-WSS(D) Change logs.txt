@@ -120,3 +120,14 @@ ALL DONE 09/04/2020
 >Added a ReqSuccess flag to make sure the Weather data for Weather compensation at SST is successfully retrieved
 >Removed Weather compensation at SST using Weather codes
 >Modified Cloudcovers for Rain alert to 75 and 80 (for drizzle)
+
+---Sense OS v2.0.7--- <07/11/2024> <iWSS3.2>
+>Hardware changes - Added RGB, Lolin NodeMCU and Compact PSU
+>Added Alias for Digital pins for easy reference
+>Modified MSR notification text (MSR does not alert for short mains interruption as previous hardware version)
+>Added Red Led indication for Upper module status indication
+>Added buzzer alert if flood light switched when Upper module is offline
+>Reduced forced delay in flood light trigger
+>Added Green Led indication for rain alert condition
+>Added a new condition to check for no rain alert condition
+>Changed file names
